@@ -548,4 +548,4 @@
           ;; (-stop consumer)?
           (clear-tables cdb-spec))
         (-offset [consumer]
-          (queryf cdb-spec "SELECT * FFOM event_offset"))))))
+          (queryf cdb-spec "SELECT * FROM event_offset"))))))
