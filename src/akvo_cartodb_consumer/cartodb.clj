@@ -26,11 +26,11 @@
                                    ~map))))))
 
 (defn cartodb-spec [config org-id]
-  (let [api-key (get-in config [org-id :cartodb-api-key])
-        sql-api (get-in config [org-id :cartodb-sql-api])]
+  (let [api-key (get config :cartodb-api-key)
+        cartodb-host (get config :cartodb-host)]
     (assert api-key "Cartodb api key is missing")
-    (assert sql-api "Cartodb sql api url is missing")
-    {:url sql-api
+    (assert cartodb-host "Cartodb host is missing")
+    {:url (format "https://%s.%s/api/v2/sql" org-id cartodb-host)
      :api-key api-key
      :org-id org-id}))
 
