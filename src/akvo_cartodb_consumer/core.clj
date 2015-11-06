@@ -69,7 +69,7 @@
                                        [org-id]
                                        merge
                                        (get-cartodb-config akvo-flow-server-config-path org-id)
-                                       (select-keys config [:event-log-port :event-log-server :event-log-password])))
+                                       (select-keys config [:event-log-port :event-log-server :event-log-password :event-log-user])))
                           {}
                           (keys (:instances config)))]
     (assoc config :instances instances)))
