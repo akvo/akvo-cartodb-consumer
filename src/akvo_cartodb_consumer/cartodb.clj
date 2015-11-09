@@ -511,13 +511,12 @@
                 entity-type))))
 
 (defn start [org-id config event-handler]
-  (let [db-spec (pg/event-log-spec config org-id)
-        cdb-spec (cartodb-spec config org-id)
+  (let [cdb-spec (cartodb-spec config org-id)
         entity-store (es/cached-entity-store
                       (cartodb-entity-store cdb-spec)
                       1e5)
         offset (get-offset cdb-spec org-id)
-        {:keys [chan close!] :as events} (pg/event-chan* db-spec offset)
+        {:keys [chan close!] :as events} (pg/event-chan config offset)
         event-handler (wrap-update-offset cdb-spec
                                           entity-store
                                           event-handler)]
