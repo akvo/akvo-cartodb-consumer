@@ -86,18 +86,19 @@
 
 
 (defn reload-config [current-config running-consumers]
-  (let [{:keys [akvo-config-path
+  (let [previous-config @current-config
+        {:keys [akvo-config-path
                 akvo-flow-services-path
-                config-file-name]} current-config
+                config-file-name]} previous-config
         next-config (do (pull akvo-config-path)
                         (pull akvo-flow-services-path)
                         (get-config akvo-config-path
                                     akvo-flow-services-path
                                     config-file-name))
-        current-instances (-> current-config :instances keys set)
+        previous-instances (-> previous-config :instances keys set)
         next-instances (-> next-config :instances keys set)
-        new-instances (set/difference next-instances current-instances)
-        removed-instances (set/difference current-instances next-instances)]
+        new-instances (set/difference next-instances previous-instances)
+        removed-instances (set/difference previous-instances next-instances)]
     (doseq [org-id new-instances]
       (swap! running-consumers
              assoc
@@ -108,7 +109,8 @@
     (doseq [org-id removed-instances]
       (let [consumer (get @running-consumers org-id)]
         (consumer/stop consumer)
-        (swap! running-consumers dissoc org-id)))))
+        (swap! running-consumers dissoc org-id)))
+    (reset! current-config next-config)))
 
 ;; Note: both config and running consumers are atoms. They can be redefined at runtime
 (defn app [config running-consumers]
