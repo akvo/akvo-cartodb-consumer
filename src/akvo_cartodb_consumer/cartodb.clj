@@ -382,11 +382,12 @@
       (es/delete-entity entity-store "ANSWER" id))))
 
 (defn delete-all-raw-data-tables [cdb-spec]
-  (when-let [tables (->> (queryf cdb-spec "SELECT tablename FROM pg_tables")
-                         (map #(get % "tablename"))
-                         (filter #(.startsWith % "raw_data_"))
-                         seq)]
-    (queryf cdb-spec "DROP TABLE IF EXISTS %s;" (string/join "," tables))))
+  (when-let [all-tables (->> (queryf cdb-spec "SELECT tablename FROM pg_tables")
+                             (map #(get % "tablename"))
+                             (filter #(.startsWith % "raw_data_"))
+                             seq)]
+    (doseq [tables (partition-all 20 all-tables)]
+      (queryf cdb-spec "DROP TABLE IF EXISTS %s;" (string/join "," tables)))))
 
 (defn get-offset [cdb-spec org-id]
   (let [offset (-> (queryf cdb-spec
