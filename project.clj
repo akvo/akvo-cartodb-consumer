@@ -21,6 +21,7 @@
                  [ring/ring-jetty-adapter "1.3.2"]
                  [com.taoensso/timbre "3.4.0"]
                  [me.raynes/fs "1.4.6"]
+                 [listora/corax "0.3.0"]
                  [http-kit "2.1.18"]
                  [clj-http "1.0.1"]
                  [liberator "0.12.2"]

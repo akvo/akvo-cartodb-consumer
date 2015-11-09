@@ -13,7 +13,8 @@
             [clojure.java.jdbc :as jdbc]
             [cheshire.core :refer (generate-string parse-string)]
             [environ.core :refer (env)]
-            [org.httpkit.client :as http])
+            [org.httpkit.client :as http]
+            [clj-statsd :as statsd])
   (:import [org.postgresql.util PGobject]))
 
 (defmacro ensure
@@ -459,15 +460,21 @@
           0)
       offset)))
 
-(defn wrap-update-offset [cdb-spec org-id entity-store event-handler]
+(defn wrap-update-offset [cdb-spec entity-store event-handler]
   (fn [event]
     (try
       (event-handler cdb-spec entity-store event)
+      (statsd/increment (format "%s.handle-event.%s"
+                                (:org-id cdb-spec)
+                                (get-in event [:payload "eventType"])))
       (queryf cdb-spec
               "UPDATE event_offset SET event_offset=%s WHERE org_id='%s'"
               (:offset event)
               (:org-id cdb-spec))
       (catch Exception e
+        (statsd/increment (format "%s.handle-event-exception.%s"
+                                  (:org-id cdb-spec)
+                                  (get-in event [:payload "eventType"])))
         (timbre/error e
                       (format "Could not handle event for %s: %s"
                               (:org-id cdb-spec)
@@ -512,13 +519,14 @@
         offset (get-offset cdb-spec org-id)
         {:keys [chan close!] :as events} (pg/event-chan* db-spec offset)
         event-handler (wrap-update-offset cdb-spec
-                                          org-id
                                           entity-store
                                           event-handler)]
     (async/thread
       (loop []
           (when-let [event (async/<!! chan)]
-            (event-handler event)
+            (statsd/with-timing (format "%s.handle-event.%s"
+                                        org-id (get-in event [:payload "eventType"]))
+              (event-handler event))
             (recur))))
     close!))
 
