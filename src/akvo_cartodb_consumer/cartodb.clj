@@ -109,52 +109,14 @@
                     (:org-id cdb-spec) q (first (get body "error")))
       (get body "rows"))))
 
-(defn question-type->db-type [question-type]
-  (condp contains? question-type
-    #{"FREE_TEXT" "OPTION" "NUMBER" "PHOTO" "GEO" "SCAN" "VIDEO" "GEOSHAPE"} "text"
-    #{"DATE"} "date"
-    #{"CASCADE"} "text[]"))
-
-(defn answer-type->db-type [answer-type]
-  (condp contains? answer-type
-    #{"VALUE" "GEO" "IMAGE" "VIDEO" "OTHER"} "text"
-    #{"DATE"} "date"
-    #{"CASCADE"} "text[]"))
-
 (defn raw-data-table-name [form-id]
   (ensure (integer? form-id) "Invalid form-id" {:form-id form-id})
   (str "raw_data_" form-id))
 
-(defn munge-display-text [display-text]
-  (ensure (string? display-text) "Invalid display-text" {:display-text display-text})
-  (-> display-text
-      (.replaceAll " " "_")
-      (.replaceAll "[^A-Za-z0-9_]" "")))
-
-
 (defn question-column-name
-  ([cdb-spec question-id]
-   (ensure (integer? question-id) "Invalid question-id" {:question-id question-id})
-   (if-let [{:strs [display_text identifier]}
-            ;; TODO cache lookup
-            (-> (queryf cdb-spec
-                        "SELECT display_text, identifier FROM question WHERE id=%s"
-                        question-id)
-                first)]
-     (question-column-name question-id identifier display_text)
-     (throw (ex-info "Could not find question" {:org-id (:org-id cdb-spec)
-                                                :quesiton-id question-id}))))
-  ([question-id identifier display-text]
-   (ensure (and (integer? question-id)
-                         (string? display-text)
-                         (string? identifier))
-           "Can not generate question-column-name"
-           {:question-id question-id
-            :display-text display-text
-            :identifier identifier})
-   (if (empty? identifier)
-     (format "\"%s_%s\"" question-id (munge-display-text display-text))
-     identifier)))
+  [question-id]
+  (ensure (integer? question-id) "Invalid question-id" {:question-id question-id})
+  (str "q" question-id))
 
 (defmulti handle-event
   (fn [cdb-spec entity-store event]
@@ -233,10 +195,8 @@
     (queryf cdb-spec
             "ALTER TABLE IF EXISTS %s ADD COLUMN %s %s"
             (raw-data-table-name (get question "formId"))
-            (question-column-name (get question "id")
-                                  (get question "identifier" "")
-                                  (get question "displayText"))
-            (question-type->db-type (get question "questionType")))
+            (question-column-name (get question "id"))
+            "text")
     (queryf cdb-spec
             "INSERT INTO question (id, form_id, display_text, identifier, type)
                VALUES ('%s','%s','%s','%s', '%s')"
@@ -264,32 +224,13 @@
         id (get new-question "id")
         type (get new-question "questionType")
         display-text (get new-question "displayText")
-        identifier (get new-question "identifier" "")
-        existing-question (get-question cdb-spec id)
-        existing-type (get existing-question "questionType")
-        existing-display-text (get existing-question "displayText")
-        existing-identifier (get existing-question "identifier" "")]
-    (ensure existing-question "No such question" {:event event
-                                                  :org-id (:org-id cdb-spec)})
+        identifier (get new-question "identifier" "")]
     (queryf cdb-spec
             "UPDATE question SET display_text='%s', identifier='%s', type='%s' WHERE id='%s'"
             (escape-str display-text)
             identifier
             type
-            id)
-    (when (or (not= display-text existing-display-text)
-              (not= identifier existing-identifier))
-      (queryf cdb-spec
-              "ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s"
-              (raw-data-table-name (get new-question "formId"))
-              (question-column-name id existing-identifier existing-display-text)
-              (question-column-name id identifier display-text)))
-    (when (not= type existing-type)
-      (queryf cdb-spec
-              "ALTER TABLE IF EXISTS %s ALTER COLUMN %s TYPE %s USING NULL"
-              (raw-data-table-name (get new-question "formId"))
-              (question-column-name cdb-spec id)
-              (question-type->db-type type)))))
+            id)))
 
 (defmethod handle-event "questionDeleted"
   [cdb-spec entity-store {:keys [payload offset] :as event}]
@@ -298,7 +239,7 @@
     (queryf cdb-spec
             "ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s"
             (raw-data-table-name (get question "formId"))
-            (question-column-name cdb-spec id))
+            (question-column-name id))
     (queryf cdb-spec
             "DELETE FROM question WHERE id=%s"
             id)))
@@ -416,7 +357,7 @@
     (queryf cdb-spec
             "UPDATE %s SET %s=%s WHERE id=%s"
             (raw-data-table-name (get answer "formId"))
-            (question-column-name cdb-spec (get answer "questionId"))
+            (question-column-name (get answer "questionId"))
             (format "'%s'" (escape-str (get answer "value")))
             (get answer "formInstanceId"))
     (es/set-entity entity-store answer)))
@@ -436,7 +377,7 @@
       (queryf cdb-spec
               "UPDATE %s SET %s=NULL WHERE id=%s"
               (raw-data-table-name (get answer "formId"))
-              (question-column-name cdb-spec (get answer "questionId"))
+              (question-column-name (get answer "questionId"))
               (get answer "formInstanceId"))
       (es/delete-entity entity-store "ANSWER" id))))
 
