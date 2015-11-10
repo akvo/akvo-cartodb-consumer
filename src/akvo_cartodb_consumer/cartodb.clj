@@ -112,10 +112,7 @@
   (let [body (-> (query cdb-spec (apply format q args))
                  :body
                  parse-string)]
-    (if (contains? body "error")
-      (timbre/warnf "Query error for %s. Query '%s' resulted in error message '%s'"
-                    (:org-id cdb-spec) q (first (get body "error")))
-      (get body "rows"))))
+    (get body "rows")))
 
 (defn raw-data-table-name [form-id]
   (ensure (integer? form-id) "Invalid form-id" {:form-id form-id})
