@@ -417,7 +417,7 @@
 
         (timbre/errorf e "Could not handle event for %s: %s"
                          (:org-id cdb-spec)
-                         (pr-str event))))))
+                         (generate-string event))))))
 
 (defn cartodb-entity-store [cdb-spec]
   ;; (queryf cdb-spec create-entity-store-sql)
