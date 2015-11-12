@@ -23,7 +23,7 @@
                  [me.raynes/fs "1.4.6"]
                  [listora/corax "0.3.0"]
                  [http-kit "2.1.18"]
-                 [clj-http "1.0.1"]
+                 [clj-http "2.0.0"]
                  [liberator "0.12.2"]
                  [compojure "1.3.1"]
                  [yesql "0.4.0"]

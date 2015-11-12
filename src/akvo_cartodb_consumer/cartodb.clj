@@ -13,7 +13,7 @@
             [clojure.java.jdbc :as jdbc]
             [cheshire.core :refer (generate-string parse-string)]
             [environ.core :refer (env)]
-            [org.httpkit.client :as http]
+            [clj-http.client :as http]
             [clj-statsd :as statsd])
   (:import [org.postgresql.util PGobject]))
 
@@ -89,19 +89,11 @@
     (queryf cdb-spec "SELECT cdb_cartodbfytable ('data_point');")
     (queryf cdb-spec entity-store-sql)))
 
-(def exceptional-response?
-  (comp not #{200 201 202 203 204 205 206 207 300 301 302 303 307} :status))
-
 (defn query [cdb-spec q]
   (timbre/trace q)
-  (let [response @(http/get (:url cdb-spec)
-                            {:query-params {:q q
-                                            :api_key (:api-key cdb-spec)}})]
-    (if (exceptional-response? response)
-      (do
-        (timbre/warnf "Unexpected query response: %s" (pr-str response))
-        (throw (ex-info "Unexpected query response" response)))
-      response)))
+  (http/get (:url cdb-spec)
+            {:query-params {:q q
+                            :api_key (:api-key cdb-spec)}}))
 
 (defn escape-str [s]
   (if (string? s)
@@ -468,12 +460,14 @@
                                           entity-store
                                           event-handler)]
     (async/thread
-      (loop []
+      (http/with-connection-pool {:timeout 20
+                                  :threads 1}
+        (loop []
           (when-let [event (async/<!! chan)]
             (statsd/with-timing (format "%s.handle-event.%s"
                                         org-id (get-in event [:payload "eventType"]))
               (event-handler event))
-            (recur))))
+            (recur)))))
     close!))
 
 (defn clear-tables [cdb-spec]
