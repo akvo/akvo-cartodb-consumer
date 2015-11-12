@@ -147,7 +147,6 @@
                            (str repos-dir "/akvo-flow-server-config")
                            config-file-name)
         running-consumers (run-consumers config)]
-    (timbre/merge-config! {:output-fn (partial timbre/default-output-fn {:stacktrace-fonts {}})})
     (timbre/set-level! (:log-level config :info))
     (statsd/setup (:statsd-host config)
                   (:statsd-port config)

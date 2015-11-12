@@ -19,7 +19,7 @@
                  [ring/ring-core "1.3.2"]
                  [ring/ring-json "0.3.1"]
                  [ring/ring-jetty-adapter "1.3.2"]
-                 [com.taoensso/timbre "4.1.4"]
+                 [com.taoensso/timbre "3.4.0"]
                  [me.raynes/fs "1.4.6"]
                  [listora/corax "0.3.0"]
                  [http-kit "2.1.18"]
