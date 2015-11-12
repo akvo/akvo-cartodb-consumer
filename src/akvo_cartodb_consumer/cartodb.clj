@@ -444,11 +444,11 @@
                      "INSERT INTO entity_store VALUES ('%s', %s, '%s');"
                      entity-type
                      id
-                     (pr-str entity))
+                     (escape-str (pr-str entity)))
              (catch Exception e
                (queryf cdb-spec
                        "UPDATE entity_store SET entity='%s' WHERE id=%s AND entity_type='%s';"
-                       (pr-str entity)
+                       (escape-str (pr-str entity))
                        id
                        entity-type))))
       (-del [_ entity-type id]
