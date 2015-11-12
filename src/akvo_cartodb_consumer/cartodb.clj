@@ -323,8 +323,8 @@
             lat
             lon
             (get data-point "surveyId")
-            (get data-point "name")
-            (get data-point "identifier"))))
+            (escape-str (get data-point "name"))
+            (escape-str (get data-point "identifier")))))
 
 (defmethod handle-event "dataPointUpdated"
   [cdb-spec entity-store {:keys [payload offset]}]
@@ -338,8 +338,8 @@
             lat
             lon
             (get data-point "surveyId")
-            (get data-point "name")
-            (get data-point "identifier")
+            (escape-str (get data-point "name"))
+            (escape-str (get data-point "identifier"))
             (get data-point "id"))))
 
 (defmethod handle-event "dataPointDeleted"
