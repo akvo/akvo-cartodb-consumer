@@ -12,7 +12,6 @@
             [clojure.pprint :refer (pprint)]
             [clojure.java.jdbc :as jdbc]
             [cheshire.core :refer (generate-string parse-string)]
-            [environ.core :refer (env)]
             [clj-http.client :as http]
             [clj-statsd :as statsd])
   (:import [org.postgresql.util PGobject]))
