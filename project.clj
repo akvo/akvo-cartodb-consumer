@@ -8,6 +8,7 @@
                  [org.clojure/java.jdbc "0.4.2"]
                  [org.clojure/core.async "0.2.374"]
                  [org.clojure/core.cache "0.6.4"]
+                 [org.clojure/tools.nrepl "0.2.12"]
                  [org.postgresql/postgresql "9.4-1205-jdbc41"]
                  [com.google.appengine/appengine-tools-sdk "1.9.28"]
                  [com.google.appengine/appengine-remote-api "1.9.28"]

@@ -36,6 +36,7 @@
       (loop []
         (try
           (with-open [conn (jdbc/get-connection db-spec)]
+            (.setAutoCommit conn false)
             (with-open [stmt (.createStatement conn)]
               (.setFetchSize stmt 1000)
               (with-open [result-set (.executeQuery stmt (get-from @last-offset))]
