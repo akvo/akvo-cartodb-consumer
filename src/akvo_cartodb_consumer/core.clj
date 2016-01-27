@@ -141,18 +141,21 @@
 (defn -main [repos-dir config-file-name]
   (ensure-directory repos-dir)
   (shell/with-sh-dir repos-dir
-    (clone-or-pull repos-dir "akvo-flow-server-config")
+    ;; (clone-or-pull repos-dir "akvo-flow-server-config")
     (clone-or-pull repos-dir "akvo-config"))
-  (let [config (get-config (str repos-dir "/akvo-config")
-                           (str repos-dir "/akvo-flow-server-config")
-                           config-file-name)
-        running-consumers (run-consumers config)]
-    (timbre/merge-config! {:level (:log-level config :info)
-                           :output-fn (partial timbre/default-output-fn {:stacktrace-fonts {}})})
-    (statsd/setup (:statsd-host config)
-                  (:statsd-port config)
-                  :prefix (:statsd-prefix config))
-    (let [port (Integer. (:port config 3030))]
-      (jetty/run-jetty (app (atom config) (atom running-consumers))
-                       {:port port
-                        :join? false}))))
+  (println "How far can you get?")
+
+  ;; (let [config (get-config (str repos-dir "/akvo-config")
+  ;;                          (str repos-dir "/akvo-flow-server-config")
+  ;;                          config-file-name)
+  ;;       running-consumers (run-consumers config)]
+  ;;   (timbre/merge-config! {:level (:log-level config :info)
+  ;;                          :output-fn (partial timbre/default-output-fn {:stacktrace-fonts {}})})
+  ;;   (statsd/setup (:statsd-host config)
+  ;;                 (:statsd-port config)
+  ;;                 :prefix (:statsd-prefix config))
+  ;;   (let [port (Integer. (:port config 3030))]
+  ;;     (jetty/run-jetty (app (atom config) (atom running-consumers))
+  ;;                      {:port port
+  ;;                       :join? false})))
+  )
